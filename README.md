@@ -10,13 +10,21 @@ A web application that displays extended weather forecasts from the National Wea
 - **Search History**: Recent searches are saved in local storage and displayed in a carousel for quick access
 - **Responsive Design**: Works on desktop and mobile devices
 
+## Deployment
+
+This app is automatically deployed to GitHub Pages when changes are pushed to the main branch.
+
 ## How to Use
 
-### Option 1: Open Directly
+### Option 1: GitHub Pages (Recommended)
+
+The app is deployed at the GitHub Pages URL for this repository.
+
+### Option 2: Open Directly
 
 Simply open `index.html` in your web browser.
 
-### Option 2: Local Server
+### Option 3: Local Server
 
 For better compatibility and to avoid CORS issues, run a local web server:
 
