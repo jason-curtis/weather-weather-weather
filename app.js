@@ -2,13 +2,20 @@
 const state = {
     currentLocation: null,
     searchHistory: [],
-    maxHistoryItems: 10
+    maxHistoryItems: 10,
+    map: null,
+    minimap: null,
+    mapMarker: null,
+    minimapMarker: null
 };
 
 // DOM elements
 const locationSearch = document.getElementById('locationSearch');
 const searchResults = document.getElementById('searchResults');
 const useCurrentLocationBtn = document.getElementById('useCurrentLocation');
+const showMapBtn = document.getElementById('showMapBtn');
+const mapModal = document.getElementById('mapModal');
+const closeMapBtn = document.getElementById('closeMapBtn');
 const recentSearchesDiv = document.getElementById('recentSearches');
 const currentLocationDiv = document.getElementById('currentLocation');
 const forecastContainer = document.getElementById('forecastContainer');
@@ -22,6 +29,15 @@ function init() {
     // Event listeners
     locationSearch.addEventListener('input', handleSearchInput);
     useCurrentLocationBtn.addEventListener('click', handleCurrentLocation);
+    showMapBtn.addEventListener('click', showMapModal);
+    closeMapBtn.addEventListener('click', closeMapModal);
+
+    // Close map modal when clicking outside
+    mapModal.addEventListener('click', (e) => {
+        if (e.target === mapModal) {
+            closeMapModal();
+        }
+    });
 
     // Close search results when clicking outside
     document.addEventListener('click', (e) => {
@@ -311,8 +327,13 @@ async function loadForecast(location) {
     state.currentLocation = location;
 
     // Update UI
-    currentLocationDiv.textContent = `Forecast for: ${location.name}`;
+    currentLocationDiv.innerHTML = `<span>Forecast for: ${location.name}</span><div id="locationMinimap" class="location-minimap"></div>`;
     currentLocationDiv.classList.add('show');
+
+    // Initialize minimap
+    setTimeout(() => {
+        initializeMinimap(location.lat, location.lon);
+    }, 100);
 
     // Add to history
     addToHistory(location);
@@ -413,6 +434,120 @@ function getSegmentLabel(hoursAhead) {
     }
 
     return `${formatDate(startTime)} - ${formatDate(endTime)}`;
+}
+
+// Map functions
+function showMapModal() {
+    mapModal.classList.add('show');
+
+    // Initialize map if not already initialized
+    if (!state.map) {
+        setTimeout(() => {
+            initializeMap();
+        }, 100); // Small delay to ensure modal is visible
+    } else {
+        // Refresh map size
+        state.map.invalidateSize();
+    }
+}
+
+function closeMapModal() {
+    mapModal.classList.remove('show');
+}
+
+function initializeMap() {
+    // Default center (US center)
+    const defaultLat = state.currentLocation?.lat || 39.8283;
+    const defaultLon = state.currentLocation?.lon || -98.5795;
+    const defaultZoom = state.currentLocation ? 8 : 4;
+
+    // Initialize main map with topographic tiles
+    state.map = L.map('map').setView([defaultLat, defaultLon], defaultZoom);
+
+    // Add OpenTopoMap tiles (topographic)
+    L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        maxZoom: 17,
+        attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)'
+    }).addTo(state.map);
+
+    // Add click handler
+    state.map.on('click', async (e) => {
+        const lat = e.latlng.lat;
+        const lon = e.latlng.lng;
+
+        // Update or create marker
+        if (state.mapMarker) {
+            state.mapMarker.setLatLng(e.latlng);
+        } else {
+            state.mapMarker = L.marker(e.latlng).addTo(state.map);
+        }
+
+        // Reverse geocode to get location name
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?` +
+                `format=json&lat=${lat}&lon=${lon}`,
+                {
+                    headers: {
+                        'User-Agent': 'WeatherForecastApp/1.0'
+                    }
+                }
+            );
+
+            const data = await response.json();
+
+            const location = {
+                name: data.display_name || `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+                lat: lat,
+                lon: lon
+            };
+
+            // Load forecast and close modal
+            closeMapModal();
+            locationSearch.value = location.name;
+            loadForecast(location);
+        } catch (error) {
+            console.error('Reverse geocoding error:', error);
+            const location = {
+                name: `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+                lat: lat,
+                lon: lon
+            };
+            closeMapModal();
+            loadForecast(location);
+        }
+    });
+}
+
+function initializeMinimap(lat, lon) {
+    const minimapContainer = document.getElementById('locationMinimap');
+
+    // Clear previous minimap
+    if (state.minimap) {
+        state.minimap.remove();
+    }
+
+    // Create new minimap
+    state.minimap = L.map('locationMinimap', {
+        center: [lat, lon],
+        zoom: 8,
+        zoomControl: false,
+        dragging: false,
+        touchZoom: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false,
+        keyboard: false,
+        attributionControl: false
+    });
+
+    // Add OpenTopoMap tiles
+    L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        maxZoom: 17
+    }).addTo(state.minimap);
+
+    // Add marker
+    L.marker([lat, lon]).addTo(state.minimap);
 }
 
 // Initialize app when DOM is ready
