@@ -168,12 +168,6 @@ h1 {
 .carousel-item-controls {
     display: flex;
     gap: 4px;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.carousel-item:hover .carousel-item-controls {
-    opacity: 1;
 }
 
 .carousel-item-btn {
