@@ -7,7 +7,8 @@ const state = {
     minimap: null,
     mapMarker: null,
     minimapMarker: null,
-    isLoadingForecast: false
+    isLoadingForecast: false,
+    carouselMinimaps: [] // Store carousel minimap instances
 };
 
 // DOM elements
@@ -26,6 +27,11 @@ const loadingIndicator = document.getElementById('loadingIndicator');
 function init() {
     loadSearchHistory();
     renderRecentSearches();
+
+    // Load most recent search on page load
+    if (state.searchHistory.length > 0) {
+        loadForecast(state.searchHistory[0]);
+    }
 
     // Event listeners
     locationSearch.addEventListener('input', handleSearchInput);
@@ -106,6 +112,14 @@ function addToHistory(location) {
 
 // Render recent searches carousel
 function renderRecentSearches() {
+    // Clean up old minimap instances
+    state.carouselMinimaps.forEach(map => {
+        if (map) {
+            map.remove();
+        }
+    });
+    state.carouselMinimaps = [];
+
     if (state.searchHistory.length === 0) {
         recentSearchesDiv.classList.remove('show');
         return;
@@ -117,7 +131,7 @@ function renderRecentSearches() {
     carousel.className = 'carousel';
 
     const header = document.createElement('h3');
-    header.textContent = 'Recent Searches';
+    header.textContent = 'Recent Locations';
 
     state.searchHistory.forEach((location, index) => {
         const item = document.createElement('div');
@@ -128,11 +142,21 @@ function renderRecentSearches() {
             item.classList.add('active');
         }
 
+        // Minimap container with fixed dimensions to prevent layout shift
+        const minimapContainer = document.createElement('div');
+        minimapContainer.className = 'carousel-minimap';
+        minimapContainer.id = `carousel-minimap-${index}`;
+        item.appendChild(minimapContainer);
+
+        // Content container for name and controls
+        const contentContainer = document.createElement('div');
+        contentContainer.className = 'carousel-item-content';
+
         // Location name
         const nameSpan = document.createElement('span');
         nameSpan.className = 'carousel-item-name';
         nameSpan.textContent = location.name;
-        item.appendChild(nameSpan);
+        contentContainer.appendChild(nameSpan);
 
         // Controls container
         const controls = document.createElement('div');
@@ -160,7 +184,8 @@ function renderRecentSearches() {
         });
         controls.appendChild(deleteBtn);
 
-        item.appendChild(controls);
+        contentContainer.appendChild(controls);
+        item.appendChild(contentContainer);
 
         // Click to load forecast
         item.addEventListener('click', () => {
@@ -173,6 +198,13 @@ function renderRecentSearches() {
     recentSearchesDiv.innerHTML = '';
     recentSearchesDiv.appendChild(header);
     recentSearchesDiv.appendChild(carousel);
+
+    // Initialize minimaps after DOM is updated
+    setTimeout(() => {
+        state.searchHistory.forEach((location, index) => {
+            initializeCarouselMinimap(index, location.lat, location.lon);
+        });
+    }, 100);
 }
 
 // Remove a search from history
@@ -649,6 +681,40 @@ function initializeMinimap(lat, lon) {
 
     // Add marker
     L.marker([lat, lon]).addTo(state.minimap);
+}
+
+function initializeCarouselMinimap(index, lat, lon) {
+    const containerId = `carousel-minimap-${index}`;
+    const container = document.getElementById(containerId);
+
+    if (!container) {
+        console.warn(`Container ${containerId} not found`);
+        return;
+    }
+
+    // Create new minimap for this carousel item
+    const minimap = L.map(containerId, {
+        center: [lat, lon],
+        zoom: 6,
+        zoomControl: false,
+        dragging: false,
+        touchZoom: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false,
+        keyboard: false,
+        attributionControl: false
+    });
+
+    // Add OpenTopoMap tiles
+    L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        maxZoom: 17
+    }).addTo(minimap);
+
+    // No marker for carousel minimaps
+
+    // Store the minimap instance
+    state.carouselMinimaps[index] = minimap;
 }
 
 // Initialize app when DOM is ready
