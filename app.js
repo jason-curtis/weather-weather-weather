@@ -6,7 +6,8 @@ const state = {
     map: null,
     minimap: null,
     mapMarker: null,
-    minimapMarker: null
+    minimapMarker: null,
+    isLoadingForecast: false
 };
 
 // DOM elements
@@ -409,23 +410,31 @@ async function fetchForecastImage(pageUrl) {
 
 // Load forecast for a location
 async function loadForecast(location) {
+    // Prevent concurrent forecast loads
+    if (state.isLoadingForecast) {
+        console.log('Forecast already loading, ignoring request');
+        return;
+    }
+
+    state.isLoadingForecast = true;
     state.currentLocation = location;
 
-    // Update UI
-    currentLocationDiv.innerHTML = `<span>Forecast for: ${location.name}</span><div id="locationMinimap" class="location-minimap"></div>`;
-    currentLocationDiv.classList.add('show');
+    try {
+        // Update UI
+        currentLocationDiv.innerHTML = `<span>Forecast for: ${location.name}</span><div id="locationMinimap" class="location-minimap"></div>`;
+        currentLocationDiv.classList.add('show');
 
-    // Initialize minimap
-    setTimeout(() => {
-        initializeMinimap(location.lat, location.lon);
-    }, 100);
+        // Initialize minimap
+        setTimeout(() => {
+            initializeMinimap(location.lat, location.lon);
+        }, 100);
 
-    // Add to history
-    addToHistory(location);
+        // Add to history
+        addToHistory(location);
 
-    // Show loading
-    loadingIndicator.style.display = 'block';
-    forecastContainer.innerHTML = '';
+        // Show loading
+        loadingIndicator.style.display = 'block';
+        forecastContainer.innerHTML = '';
 
     // Generate forecast segments
     // NWS graphical forecast provides about 6.5 days (~155 hours)
@@ -501,6 +510,9 @@ async function loadForecast(location) {
 
     forecastContainer.appendChild(scrollContainer);
     loadingIndicator.style.display = 'none';
+    } finally {
+        state.isLoadingForecast = false;
+    }
 }
 
 // Get label for forecast segment based on hours ahead
