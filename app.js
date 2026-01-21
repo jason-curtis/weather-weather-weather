@@ -50,7 +50,7 @@ function init() {
     // Event listeners
     locationSearch.addEventListener('input', handleSearchInput);
     useCurrentLocationBtn.addEventListener('click', handleCurrentLocation);
-    showMapBtn.addEventListener('click', showMapModal);
+    showMapBtn.addEventListener('click', () => showMapModal());
     closeMapBtn.addEventListener('click', closeMapModal);
 
     // Close map modal when clicking outside (but not when dragging)
