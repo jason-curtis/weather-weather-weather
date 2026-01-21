@@ -140,11 +140,14 @@ h1 {
 
 .carousel-item {
     background: #f5f5f5;
-    padding: 10px 16px;
+    padding: 10px 12px;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s;
     border: 2px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .carousel-item:hover {
@@ -155,6 +158,57 @@ h1 {
 .carousel-item.active {
     background: #667eea;
     color: white;
+}
+
+.carousel-item-name {
+    flex: 1;
+    min-width: 0;
+}
+
+.carousel-item-controls {
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.carousel-item:hover .carousel-item-controls {
+    opacity: 1;
+}
+
+.carousel-item-btn {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.carousel-item.active .carousel-item-btn {
+    background: rgba(255, 255, 255, 0.95);
+}
+
+.carousel-item-btn:hover {
+    background: white;
+    transform: scale(1.1);
+}
+
+.delete-btn:hover {
+    color: #c33;
+    border-color: #c33;
+}
+
+.rename-btn:hover {
+    color: #667eea;
+    border-color: #667eea;
 }
 
 .current-location {

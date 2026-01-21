@@ -126,16 +126,82 @@ function renderRecentSearches() {
             state.currentLocation.lon === location.lon) {
             item.classList.add('active');
         }
-        item.textContent = location.name;
+
+        // Location name
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'carousel-item-name';
+        nameSpan.textContent = location.name;
+        item.appendChild(nameSpan);
+
+        // Controls container
+        const controls = document.createElement('div');
+        controls.className = 'carousel-item-controls';
+
+        // Rename button
+        const renameBtn = document.createElement('button');
+        renameBtn.className = 'carousel-item-btn rename-btn';
+        renameBtn.innerHTML = '✎';
+        renameBtn.title = 'Rename';
+        renameBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            renameSearch(index);
+        });
+        controls.appendChild(renameBtn);
+
+        // Delete button
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'carousel-item-btn delete-btn';
+        deleteBtn.innerHTML = '×';
+        deleteBtn.title = 'Remove';
+        deleteBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeSearch(index);
+        });
+        controls.appendChild(deleteBtn);
+
+        item.appendChild(controls);
+
+        // Click to load forecast
         item.addEventListener('click', () => {
             loadForecast(location);
         });
+
         carousel.appendChild(item);
     });
 
     recentSearchesDiv.innerHTML = '';
     recentSearchesDiv.appendChild(header);
     recentSearchesDiv.appendChild(carousel);
+}
+
+// Remove a search from history
+function removeSearch(index) {
+    state.searchHistory.splice(index, 1);
+    saveSearchHistory();
+    renderRecentSearches();
+}
+
+// Rename a search in history
+function renameSearch(index) {
+    const location = state.searchHistory[index];
+    const newName = prompt('Enter a new name for this location:', location.name);
+
+    if (newName && newName.trim() !== '') {
+        location.name = newName.trim();
+        saveSearchHistory();
+        renderRecentSearches();
+
+        // Update current location display if this is the active location
+        if (state.currentLocation &&
+            state.currentLocation.lat === location.lat &&
+            state.currentLocation.lon === location.lon) {
+            state.currentLocation.name = newName.trim();
+            currentLocationDiv.innerHTML = `<span>Forecast for: ${newName.trim()}</span><div id="locationMinimap" class="location-minimap"></div>`;
+            setTimeout(() => {
+                initializeMinimap(location.lat, location.lon);
+            }, 100);
+        }
+    }
 }
 
 // Handle search input with debouncing
