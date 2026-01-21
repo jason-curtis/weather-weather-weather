@@ -107,12 +107,20 @@ function saveSearchHistory() {
 
 // Add location to search history
 function addToHistory(location) {
-    // Remove if already exists
-    state.searchHistory = state.searchHistory.filter(
-        item => !(item.lat === location.lat && item.lon === location.lon)
+    // Check if location already exists
+    const existingIndex = state.searchHistory.findIndex(
+        item => item.lat === location.lat && item.lon === location.lon
     );
 
-    // Add to beginning
+    if (existingIndex !== -1) {
+        // Location exists - update its name if changed, but don't reorder
+        state.searchHistory[existingIndex].name = location.name;
+        saveSearchHistory();
+        renderRecentSearches();
+        return;
+    }
+
+    // New location - add to beginning
     state.searchHistory.unshift(location);
 
     // Limit history size
@@ -251,6 +259,9 @@ function renameSearch(index) {
             urlParams.set('name', newName.trim());
             const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
             window.history.pushState({ location: state.currentLocation }, '', newUrl);
+
+            // Update page title
+            document.title = `NWS Forecast Viewer - ${newName.trim()}`;
 
             // Update forecast title
             const forecastTitle = document.querySelector('.forecast-title');
@@ -483,6 +494,9 @@ async function loadForecast(location) {
         urlParams.set('name', location.name);
         const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
         window.history.pushState({ location }, '', newUrl);
+
+        // Update page title
+        document.title = `NWS Forecast Viewer - ${location.name}`;
 
         // Add to history
         addToHistory(location);
