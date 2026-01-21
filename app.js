@@ -32,9 +32,28 @@ function init() {
     showMapBtn.addEventListener('click', showMapModal);
     closeMapBtn.addEventListener('click', closeMapModal);
 
-    // Close map modal when clicking outside
-    mapModal.addEventListener('click', (e) => {
-        if (e.target === mapModal) {
+    // Close map modal when clicking outside (but not when dragging)
+    let modalMouseDownTarget = null;
+    let modalMouseDownX = 0;
+    let modalMouseDownY = 0;
+
+    mapModal.addEventListener('mousedown', (e) => {
+        modalMouseDownTarget = e.target;
+        modalMouseDownX = e.clientX;
+        modalMouseDownY = e.clientY;
+    });
+
+    mapModal.addEventListener('mouseup', (e) => {
+        // Only close if mousedown and mouseup were on the modal background
+        // and didn't move much (wasn't a drag)
+        const dragDistance = Math.sqrt(
+            Math.pow(e.clientX - modalMouseDownX, 2) +
+            Math.pow(e.clientY - modalMouseDownY, 2)
+        );
+
+        if (e.target === mapModal &&
+            modalMouseDownTarget === mapModal &&
+            dragDistance < 10) {
             closeMapModal();
         }
     });
