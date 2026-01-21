@@ -107,9 +107,10 @@ function saveSearchHistory() {
 
 // Add location to search history
 function addToHistory(location) {
-    // Check if location already exists
+    // Check if location already exists (compare with same precision as URL params)
     const existingIndex = state.searchHistory.findIndex(
-        item => item.lat === location.lat && item.lon === location.lon
+        item => item.lat.toFixed(4) === location.lat.toFixed(4) &&
+                item.lon.toFixed(4) === location.lon.toFixed(4)
     );
 
     if (existingIndex !== -1) {
