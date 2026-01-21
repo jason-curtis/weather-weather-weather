@@ -262,7 +262,7 @@ function renameSearch(index) {
             window.history.pushState({ location: state.currentLocation }, '', newUrl);
 
             // Update page title
-            document.title = `NWS Forecast Viewer - ${newName.trim()}`;
+            document.title = `weather3.cloud - ${newName.trim()}`;
 
             // Update forecast title
             const forecastTitle = document.querySelector('.forecast-title');
@@ -497,7 +497,7 @@ async function loadForecast(location) {
         window.history.pushState({ location }, '', newUrl);
 
         // Update page title
-        document.title = `NWS Forecast Viewer - ${location.name}`;
+        document.title = `weather3.cloud - ${location.name}`;
 
         // Add to history
         addToHistory(location);
