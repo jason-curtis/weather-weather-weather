@@ -133,36 +133,18 @@ h1 {
 
 .carousel {
     display: flex;
+    flex-wrap: wrap;
     gap: 10px;
-    overflow-x: auto;
     padding: 5px 0;
-    scrollbar-width: thin;
-    scrollbar-color: #667eea #f0f0f0;
-}
-
-.carousel::-webkit-scrollbar {
-    height: 8px;
-}
-
-.carousel::-webkit-scrollbar-track {
-    background: #f0f0f0;
-    border-radius: 4px;
-}
-
-.carousel::-webkit-scrollbar-thumb {
-    background: #667eea;
-    border-radius: 4px;
 }
 
 .carousel-item {
-    flex-shrink: 0;
     background: #f5f5f5;
     padding: 10px 16px;
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s;
     border: 2px solid transparent;
-    white-space: nowrap;
 }
 
 .carousel-item:hover {

@@ -463,7 +463,10 @@ function initializeMap() {
     const defaultZoom = state.currentLocation ? 8 : 4;
 
     // Initialize main map with topographic tiles
-    state.map = L.map('map').setView([defaultLat, defaultLon], defaultZoom);
+    // Disable double-click zoom since we use clicks to select locations
+    state.map = L.map('map', {
+        doubleClickZoom: false
+    }).setView([defaultLat, defaultLon], defaultZoom);
 
     // Add OpenTopoMap tiles (topographic)
     L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
