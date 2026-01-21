@@ -311,6 +311,27 @@ h1 {
     border-radius: 6px;
 }
 
+.forecast-header {
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #e0e0e0;
+}
+
+.forecast-header-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.forecast-title {
+    margin: 0;
+    font-size: 24px;
+    color: #333;
+    flex: 1;
+    min-width: 200px;
+}
+
 .forecast-scroll {
     display: flex;
     gap: 20px;

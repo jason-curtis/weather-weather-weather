@@ -28,8 +28,22 @@ function init() {
     loadSearchHistory();
     renderRecentSearches();
 
-    // Load most recent search on page load
-    if (state.searchHistory.length > 0) {
+    // Check URL parameters first
+    const urlParams = new URLSearchParams(window.location.search);
+    const lat = urlParams.get('lat');
+    const lon = urlParams.get('lon');
+    const name = urlParams.get('name');
+
+    if (lat && lon) {
+        // Load from URL parameters
+        const location = {
+            lat: parseFloat(lat),
+            lon: parseFloat(lon),
+            name: name || `${lat}, ${lon}`
+        };
+        loadForecast(location);
+    } else if (state.searchHistory.length > 0) {
+        // Load most recent search if no URL parameters
         loadForecast(state.searchHistory[0]);
     }
 
@@ -131,7 +145,7 @@ function renderRecentSearches() {
     carousel.className = 'carousel';
 
     const header = document.createElement('h3');
-    header.textContent = 'Recent Locations';
+    header.textContent = 'Your Locations';
 
     state.searchHistory.forEach((location, index) => {
         const item = document.createElement('div');
@@ -229,10 +243,20 @@ function renameSearch(index) {
             state.currentLocation.lat === location.lat &&
             state.currentLocation.lon === location.lon) {
             state.currentLocation.name = newName.trim();
-            currentLocationDiv.innerHTML = `<span>Forecast for: ${newName.trim()}</span><div id="locationMinimap" class="location-minimap"></div>`;
-            setTimeout(() => {
-                initializeMinimap(location.lat, location.lon);
-            }, 100);
+
+            // Update URL
+            const urlParams = new URLSearchParams();
+            urlParams.set('lat', location.lat.toFixed(4));
+            urlParams.set('lon', location.lon.toFixed(4));
+            urlParams.set('name', newName.trim());
+            const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+            window.history.pushState({ location: state.currentLocation }, '', newUrl);
+
+            // Update forecast title
+            const forecastTitle = document.querySelector('.forecast-title');
+            if (forecastTitle) {
+                forecastTitle.textContent = `Forecast for ${newName.trim()}`;
+            }
         }
     }
 }
@@ -452,14 +476,13 @@ async function loadForecast(location) {
     state.currentLocation = location;
 
     try {
-        // Update UI
-        currentLocationDiv.innerHTML = `<span>Forecast for: ${location.name}</span><div id="locationMinimap" class="location-minimap"></div>`;
-        currentLocationDiv.classList.add('show');
-
-        // Initialize minimap
-        setTimeout(() => {
-            initializeMinimap(location.lat, location.lon);
-        }, 100);
+        // Update URL for sharing
+        const urlParams = new URLSearchParams();
+        urlParams.set('lat', location.lat.toFixed(4));
+        urlParams.set('lon', location.lon.toFixed(4));
+        urlParams.set('name', location.name);
+        const newUrl = `${window.location.pathname}?${urlParams.toString()}`;
+        window.history.pushState({ location }, '', newUrl);
 
         // Add to history
         addToHistory(location);
@@ -467,6 +490,9 @@ async function loadForecast(location) {
         // Show loading
         loadingIndicator.style.display = 'block';
         forecastContainer.innerHTML = '';
+
+        // Hide the separate current location div (we'll put title in forecast container)
+        currentLocationDiv.style.display = 'none';
 
     // Generate forecast segments
     // NWS graphical forecast provides about 6.5 days (~155 hours)
@@ -540,7 +566,33 @@ async function loadForecast(location) {
         scrollContainer.appendChild(segmentDiv);
     }
 
+    // Create forecast header with location name and minimap
+    const forecastHeader = document.createElement('div');
+    forecastHeader.className = 'forecast-header';
+
+    const headerContent = document.createElement('div');
+    headerContent.className = 'forecast-header-content';
+
+    const locationTitle = document.createElement('h2');
+    locationTitle.className = 'forecast-title';
+    locationTitle.textContent = `Forecast for ${location.name}`;
+
+    const minimapDiv = document.createElement('div');
+    minimapDiv.id = 'locationMinimap';
+    minimapDiv.className = 'location-minimap';
+
+    headerContent.appendChild(locationTitle);
+    headerContent.appendChild(minimapDiv);
+    forecastHeader.appendChild(headerContent);
+
+    forecastContainer.appendChild(forecastHeader);
     forecastContainer.appendChild(scrollContainer);
+
+    // Initialize minimap after DOM update
+    setTimeout(() => {
+        initializeMinimap(location.lat, location.lon);
+    }, 100);
+
     loadingIndicator.style.display = 'none';
     } finally {
         state.isLoadingForecast = false;
