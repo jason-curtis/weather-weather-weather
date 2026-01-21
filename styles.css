@@ -292,23 +292,6 @@ h1 {
     padding: 20px;
     border-radius: 12px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    overflow-x: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #667eea #f0f0f0;
-}
-
-.forecast-container::-webkit-scrollbar {
-    height: 12px;
-}
-
-.forecast-container::-webkit-scrollbar-track {
-    background: #f0f0f0;
-    border-radius: 6px;
-}
-
-.forecast-container::-webkit-scrollbar-thumb {
-    background: #667eea;
-    border-radius: 6px;
 }
 
 .forecast-header {
@@ -330,6 +313,26 @@ h1 {
     color: #333;
     flex: 1;
     min-width: 200px;
+}
+
+.forecast-scroll-wrapper {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #667eea #f0f0f0;
+}
+
+.forecast-scroll-wrapper::-webkit-scrollbar {
+    height: 12px;
+}
+
+.forecast-scroll-wrapper::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 6px;
+}
+
+.forecast-scroll-wrapper::-webkit-scrollbar-thumb {
+    background: #667eea;
+    border-radius: 6px;
 }
 
 .forecast-scroll {

@@ -593,19 +593,24 @@ async function loadForecast(location) {
     locationTitle.textContent = `Forecast for ${location.name}`;
 
     const minimapDiv = document.createElement('div');
-    minimapDiv.id = 'locationMinimap';
+    minimapDiv.id = 'forecast-minimap';
     minimapDiv.className = 'location-minimap';
 
     headerContent.appendChild(locationTitle);
     headerContent.appendChild(minimapDiv);
     forecastHeader.appendChild(headerContent);
 
+    // Wrap scroll container in a wrapper for overflow
+    const scrollWrapper = document.createElement('div');
+    scrollWrapper.className = 'forecast-scroll-wrapper';
+    scrollWrapper.appendChild(scrollContainer);
+
     forecastContainer.appendChild(forecastHeader);
-    forecastContainer.appendChild(scrollContainer);
+    forecastContainer.appendChild(scrollWrapper);
 
     // Initialize minimap after DOM update
     setTimeout(() => {
-        initializeMinimap(location.lat, location.lon);
+        initializeForecastMinimap(location.lat, location.lon);
     }, 100);
 
     loadingIndicator.style.display = 'none';
@@ -729,6 +734,42 @@ function initializeMinimap(lat, lon) {
 
     // Create new minimap
     state.minimap = L.map('locationMinimap', {
+        center: [lat, lon],
+        zoom: 8,
+        zoomControl: false,
+        dragging: false,
+        touchZoom: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false,
+        keyboard: false,
+        attributionControl: false
+    });
+
+    // Add OpenTopoMap tiles
+    L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+        maxZoom: 17
+    }).addTo(state.minimap);
+
+    // Add marker
+    L.marker([lat, lon]).addTo(state.minimap);
+}
+
+function initializeForecastMinimap(lat, lon) {
+    const minimapContainer = document.getElementById('forecast-minimap');
+
+    if (!minimapContainer) {
+        console.warn('Forecast minimap container not found');
+        return;
+    }
+
+    // Clear previous minimap
+    if (state.minimap) {
+        state.minimap.remove();
+    }
+
+    // Create new minimap
+    state.minimap = L.map('forecast-minimap', {
         center: [lat, lon],
         zoom: 8,
         zoomControl: false,
