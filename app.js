@@ -542,25 +542,31 @@ async function loadForecast(location) {
         if (segment.hours === 107) {
             const infoIcon = document.createElement('span');
             infoIcon.className = 'info-icon';
-            infoIcon.innerHTML = 'ⓘ';
+            infoIcon.innerHTML = `
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+                    <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            `;
             infoIcon.title = 'Why does this start at 107 hours?';
 
             const tooltip = document.createElement('div');
             tooltip.className = 'info-tooltip';
             tooltip.innerHTML = `
-                <strong>Why doesn't the last image start at 144 hours?</strong><br><br>
-                The National Weather Service provides graphical forecasts up to about 155 hours (6.5 days).
-                The forecast data is available starting from any hour offset (the "AheadHour" parameter).<br><br>
-                To ensure we capture the full forecast without gaps, the segments are positioned at:
+                <strong>Why does the last segment start at 107 hours?</strong><br><br>
+                The National Weather Service's graphical forecast system provides data starting from
+                any hour offset up to a maximum of <strong>hour 107</strong>. Each forecast shows a
+                48-hour window from that starting point.<br><br>
+                Our segments are positioned at:
                 <ul>
                     <li>0-48 hours (first 2 days)</li>
                     <li>48-96 hours (days 2-4)</li>
                     <li>96-144 hours (days 4-6)</li>
                     <li>107-155 hours (days 4.5-6.5)</li>
                 </ul>
-                The last segment starts at hour 107 because that's the maximum offset that still provides
-                a full 48-hour window before the forecast data ends at hour 155. Starting at hour 144
-                would only show 11 hours of data (144-155).
+                The last segment starts at hour 107 (not 144) because <strong>107 is the maximum
+                starting offset available</strong> from the NWS. This gives us the longest possible
+                forecast window, showing data up to about 155 hours (6.5 days) out.
             `;
 
             infoIcon.addEventListener('click', (e) => {
