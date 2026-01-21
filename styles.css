@@ -479,6 +479,17 @@ h1 {
     flex-shrink: 0;
 }
 
+.clickable-minimap {
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.clickable-minimap:hover {
+    border-color: #667eea;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    transform: scale(1.02);
+}
+
 @media (max-width: 768px) {
     body {
         padding: 10px;

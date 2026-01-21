@@ -594,7 +594,13 @@ async function loadForecast(location) {
 
     const minimapDiv = document.createElement('div');
     minimapDiv.id = 'forecast-minimap';
-    minimapDiv.className = 'location-minimap';
+    minimapDiv.className = 'location-minimap clickable-minimap';
+    minimapDiv.title = 'Click to edit location';
+
+    // Make minimap clickable to open map modal
+    minimapDiv.addEventListener('click', () => {
+        showMapModal(location.lat, location.lon);
+    });
 
     headerContent.appendChild(locationTitle);
     headerContent.appendChild(minimapDiv);
@@ -621,33 +627,37 @@ async function loadForecast(location) {
 
 // Get label for forecast segment based on hours ahead
 function getSegmentLabel(hoursAhead) {
-    const now = new Date();
-    const startTime = new Date(now.getTime() + hoursAhead * 60 * 60 * 1000);
-    const endTime = new Date(startTime.getTime() + 48 * 60 * 60 * 1000);
-
-    const formatDate = (date) => {
-        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        return `${days[date.getDay()]} ${months[date.getMonth()]} ${date.getDate()}`;
-    };
-
     if (hoursAhead === 0) {
-        return `Now - ${formatDate(endTime)}`;
+        return 'First 48 hours';
     }
 
-    return `${formatDate(startTime)} - ${formatDate(endTime)}`;
+    const endHour = hoursAhead + 48;
+    return `${hoursAhead}-${endHour} hours`;
 }
 
 // Map functions
-function showMapModal() {
+function showMapModal(lat = null, lon = null) {
     mapModal.classList.add('show');
 
     // Initialize map if not already initialized
     if (!state.map) {
         setTimeout(() => {
-            initializeMap();
+            initializeMap(lat, lon);
         }, 100); // Small delay to ensure modal is visible
     } else {
+        // If lat/lon provided, center on it and add/update marker
+        if (lat !== null && lon !== null) {
+            state.map.setView([lat, lon], 8);
+
+            // Update or create marker (draggable)
+            if (state.mapMarker) {
+                state.mapMarker.setLatLng([lat, lon]);
+            } else {
+                state.mapMarker = L.marker([lat, lon], { draggable: true }).addTo(state.map);
+                setupMarkerDragHandler();
+            }
+        }
+
         // Refresh map size
         state.map.invalidateSize();
     }
@@ -657,17 +667,17 @@ function closeMapModal() {
     mapModal.classList.remove('show');
 }
 
-function initializeMap() {
-    // Default center (US center)
-    const defaultLat = state.currentLocation?.lat || 39.8283;
-    const defaultLon = state.currentLocation?.lon || -98.5795;
-    const defaultZoom = state.currentLocation ? 8 : 4;
+function initializeMap(centerLat = null, centerLon = null) {
+    // Use provided coordinates or default
+    const lat = centerLat !== null ? centerLat : (state.currentLocation?.lat || 39.8283);
+    const lon = centerLon !== null ? centerLon : (state.currentLocation?.lon || -98.5795);
+    const zoom = (centerLat !== null) ? 8 : (state.currentLocation ? 8 : 4);
 
     // Initialize main map with topographic tiles
     // Disable double-click zoom since we use clicks to select locations
     state.map = L.map('map', {
         doubleClickZoom: false
-    }).setView([defaultLat, defaultLon], defaultZoom);
+    }).setView([lat, lon], zoom);
 
     // Add OpenTopoMap tiles (topographic)
     L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
@@ -675,17 +685,71 @@ function initializeMap() {
         attribution: 'Map data: © OpenStreetMap contributors, SRTM | Map style: © OpenTopoMap (CC-BY-SA)'
     }).addTo(state.map);
 
+    // If we have initial coordinates, add a draggable marker
+    if (centerLat !== null && centerLon !== null) {
+        state.mapMarker = L.marker([lat, lon], { draggable: true }).addTo(state.map);
+        setupMarkerDragHandler();
+    }
+
     // Add click handler
     state.map.on('click', async (e) => {
         const lat = e.latlng.lat;
         const lon = e.latlng.lng;
 
-        // Update or create marker
+        // Update or create marker (draggable)
         if (state.mapMarker) {
             state.mapMarker.setLatLng(e.latlng);
         } else {
-            state.mapMarker = L.marker(e.latlng).addTo(state.map);
+            state.mapMarker = L.marker(e.latlng, { draggable: true }).addTo(state.map);
+            setupMarkerDragHandler();
         }
+
+        // Reverse geocode to get location name
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?` +
+                `format=json&lat=${lat}&lon=${lon}`,
+                {
+                    headers: {
+                        'User-Agent': 'WeatherForecastApp/1.0'
+                    }
+                }
+            );
+
+            const data = await response.json();
+
+            const location = {
+                name: data.display_name || `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+                lat: lat,
+                lon: lon
+            };
+
+            // Load forecast and close modal
+            closeMapModal();
+            locationSearch.value = location.name;
+            loadForecast(location);
+        } catch (error) {
+            console.error('Reverse geocoding error:', error);
+            const location = {
+                name: `${lat.toFixed(4)}, ${lon.toFixed(4)}`,
+                lat: lat,
+                lon: lon
+            };
+            closeMapModal();
+            loadForecast(location);
+        }
+    });
+}
+
+// Setup drag handler for map marker
+function setupMarkerDragHandler() {
+    if (!state.mapMarker) return;
+
+    state.mapMarker.on('dragend', async (e) => {
+        const marker = e.target;
+        const latlng = marker.getLatLng();
+        const lat = latlng.lat;
+        const lon = latlng.lng;
 
         // Reverse geocode to get location name
         try {
