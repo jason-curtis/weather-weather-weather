@@ -343,12 +343,12 @@ async function loadForecast(location) {
     forecastContainer.innerHTML = '';
 
     // Generate forecast segments
-    // NWS provides about 7 days (168 hours) of forecast
-    // Each segment shows ~48 hours, so we'll load multiple segments
-    // To avoid gaps, we generate segments at 0, 48, 96, and 120
-    // This gives us: 0-48, 48-96, 96-144, 120-168 (last one overlaps slightly)
+    // NWS graphical forecast provides about 6.5 days (~155 hours)
+    // Each segment shows 48 hours starting from AheadHour
+    // To avoid gaps, we generate segments at 0, 48, 96, and 107
+    // This gives us: 0-48, 48-96, 96-144, 107-155 (slight overlap with previous)
     const segments = [];
-    const segmentStarts = [0, 48, 96, 120]; // Adjusted to cover full 168 hours
+    const segmentStarts = [0, 48, 96, 107]; // Covers full forecast period without gaps
 
     for (const hours of segmentStarts) {
         segments.push({
