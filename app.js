@@ -280,6 +280,32 @@ function generateForecastURL(lat, lon, hoursAhead = 0) {
     return `https://forecast.weather.gov/MapClick.php?${params.toString()}`;
 }
 
+// Fetch the forecast page and extract the image URL
+async function fetchForecastImage(pageUrl) {
+    try {
+        const response = await fetch(pageUrl);
+        if (!response.ok) {
+            throw new Error('Failed to fetch forecast page');
+        }
+
+        const html = await response.text();
+
+        // Extract the meteograms/Plotter.php URL from the HTML
+        // The pattern is: meteograms/Plotter.php?lat=...&lon=...
+        const match = html.match(/meteograms\/Plotter\.php\?[^"]+/);
+
+        if (match) {
+            const relativeUrl = match[0];
+            return `https://forecast.weather.gov/${relativeUrl}`;
+        }
+
+        return null;
+    } catch (error) {
+        console.error('Error fetching forecast image:', error);
+        return null;
+    }
+}
+
 // Load forecast for a location
 async function loadForecast(location) {
     state.currentLocation = location;
@@ -323,22 +349,46 @@ async function loadForecast(location) {
         label.className = 'segment-label';
         label.textContent = segment.label;
 
-        const img = document.createElement('img');
-        img.src = segment.url;
-        img.alt = segment.label;
-        img.loading = 'lazy';
-
-        img.onerror = () => {
-            segmentDiv.innerHTML = `
-                <div class="segment-label">${segment.label}</div>
-                <div style="padding: 20px; text-align: center; color: #999;">
-                    Forecast not available
-                </div>
-            `;
-        };
-
         segmentDiv.appendChild(label);
-        segmentDiv.appendChild(img);
+
+        // Fetch the page and extract the image URL
+        try {
+            const imageUrl = await fetchForecastImage(segment.url);
+
+            if (imageUrl) {
+                const img = document.createElement('img');
+                img.src = imageUrl;
+                img.alt = segment.label;
+                img.loading = 'lazy';
+
+                img.onerror = () => {
+                    const errorDiv = document.createElement('div');
+                    errorDiv.style.padding = '20px';
+                    errorDiv.style.textAlign = 'center';
+                    errorDiv.style.color = '#999';
+                    errorDiv.textContent = 'Forecast not available';
+                    segmentDiv.appendChild(errorDiv);
+                };
+
+                segmentDiv.appendChild(img);
+            } else {
+                const errorDiv = document.createElement('div');
+                errorDiv.style.padding = '20px';
+                errorDiv.style.textAlign = 'center';
+                errorDiv.style.color = '#999';
+                errorDiv.textContent = 'Forecast not available';
+                segmentDiv.appendChild(errorDiv);
+            }
+        } catch (error) {
+            console.error('Error loading forecast segment:', error);
+            const errorDiv = document.createElement('div');
+            errorDiv.style.padding = '20px';
+            errorDiv.style.textAlign = 'center';
+            errorDiv.style.color = '#999';
+            errorDiv.textContent = 'Forecast not available';
+            segmentDiv.appendChild(errorDiv);
+        }
+
         scrollContainer.appendChild(segmentDiv);
     }
 
