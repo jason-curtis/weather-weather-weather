@@ -362,6 +362,71 @@ h1 {
     font-size: 14px;
     font-weight: 600;
     text-align: center;
+    position: relative;
+}
+
+.info-icon {
+    display: inline-block;
+    margin-left: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+    vertical-align: middle;
+}
+
+.info-icon:hover {
+    opacity: 1;
+}
+
+.info-tooltip {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 8px;
+    background: white;
+    color: #333;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    width: 320px;
+    max-width: 90vw;
+    text-align: left;
+    font-weight: normal;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.info-tooltip.show {
+    display: block;
+}
+
+.info-tooltip strong {
+    color: #667eea;
+    font-size: 14px;
+}
+
+.info-tooltip ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.info-tooltip li {
+    margin: 4px 0;
+}
+
+/* Arrow for tooltip */
+.info-tooltip::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-bottom-color: white;
 }
 
 .error-message {

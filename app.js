@@ -538,6 +538,47 @@ async function loadForecast(location) {
         label.className = 'segment-label';
         label.textContent = segment.label;
 
+        // Add info icon to last segment
+        if (segment.hours === 107) {
+            const infoIcon = document.createElement('span');
+            infoIcon.className = 'info-icon';
+            infoIcon.innerHTML = 'ⓘ';
+            infoIcon.title = 'Why does this start at 107 hours?';
+
+            const tooltip = document.createElement('div');
+            tooltip.className = 'info-tooltip';
+            tooltip.innerHTML = `
+                <strong>Why doesn't the last image start at 144 hours?</strong><br><br>
+                The National Weather Service provides graphical forecasts up to about 155 hours (6.5 days).
+                The forecast data is available starting from any hour offset (the "AheadHour" parameter).<br><br>
+                To ensure we capture the full forecast without gaps, the segments are positioned at:
+                <ul>
+                    <li>0-48 hours (first 2 days)</li>
+                    <li>48-96 hours (days 2-4)</li>
+                    <li>96-144 hours (days 4-6)</li>
+                    <li>107-155 hours (days 4.5-6.5)</li>
+                </ul>
+                The last segment starts at hour 107 because that's the maximum offset that still provides
+                a full 48-hour window before the forecast data ends at hour 155. Starting at hour 144
+                would only show 11 hours of data (144-155).
+            `;
+
+            infoIcon.addEventListener('click', (e) => {
+                e.stopPropagation();
+                tooltip.classList.toggle('show');
+            });
+
+            // Close tooltip when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.info-icon') && !e.target.closest('.info-tooltip')) {
+                    tooltip.classList.remove('show');
+                }
+            });
+
+            label.appendChild(infoIcon);
+            label.appendChild(tooltip);
+        }
+
         segmentDiv.appendChild(label);
 
         // Fetch the page and extract the image URL
