@@ -345,11 +345,12 @@ async function loadForecast(location) {
     // Generate forecast segments
     // NWS provides about 7 days (168 hours) of forecast
     // Each segment shows ~48 hours, so we'll load multiple segments
+    // To avoid gaps, we generate segments at 0, 48, 96, and 120
+    // This gives us: 0-48, 48-96, 96-144, 120-168 (last one overlaps slightly)
     const segments = [];
-    const hoursPerSegment = 48;
-    const totalHours = 168; // 7 days
+    const segmentStarts = [0, 48, 96, 120]; // Adjusted to cover full 168 hours
 
-    for (let hours = 0; hours < totalHours; hours += hoursPerSegment) {
+    for (const hours of segmentStarts) {
         segments.push({
             label: getSegmentLabel(hours),
             url: generateForecastURL(location.lat, location.lon, hours),
