@@ -460,6 +460,12 @@ async function fetchForecastImage(pageUrl) {
 
         const html = await response.text();
 
+        // Check if NWS returned an error page
+        if (html.includes('An error occurred while processing your request')) {
+            console.error('NWS server error for this location');
+            return 'NWS_ERROR';
+        }
+
         // Extract the meteograms/Plotter.php URL from the HTML
         // The pattern is: meteograms/Plotter.php?lat=...&lon=...
         const match = html.match(/meteograms\/Plotter\.php\?[^"]+/);
@@ -591,7 +597,22 @@ async function loadForecast(location) {
         try {
             const imageUrl = await fetchForecastImage(segment.url);
 
-            if (imageUrl) {
+            if (imageUrl === 'NWS_ERROR') {
+                // NWS server returned an error
+                const errorDiv = document.createElement('div');
+                errorDiv.style.padding = '20px';
+                errorDiv.style.textAlign = 'center';
+                errorDiv.style.color = '#999';
+                errorDiv.innerHTML = `
+                    <p style="margin-bottom: 10px;">NWS graphical forecast temporarily unavailable</p>
+                    <a href="https://forecast.weather.gov/MapClick.php?lat=${location.lat.toFixed(4)}&lon=${location.lon.toFixed(4)}"
+                       target="_blank"
+                       style="color: #667eea; text-decoration: underline;">
+                        View text forecast on weather.gov
+                    </a>
+                `;
+                segmentDiv.appendChild(errorDiv);
+            } else if (imageUrl) {
                 const img = document.createElement('img');
                 img.src = imageUrl;
                 img.alt = segment.label;
@@ -602,7 +623,7 @@ async function loadForecast(location) {
                     errorDiv.style.padding = '20px';
                     errorDiv.style.textAlign = 'center';
                     errorDiv.style.color = '#999';
-                    errorDiv.textContent = 'Forecast not available';
+                    errorDiv.textContent = 'Forecast image not available';
                     segmentDiv.appendChild(errorDiv);
                 };
 
@@ -621,7 +642,7 @@ async function loadForecast(location) {
             errorDiv.style.padding = '20px';
             errorDiv.style.textAlign = 'center';
             errorDiv.style.color = '#999';
-            errorDiv.textContent = 'Forecast not available';
+            errorDiv.textContent = 'Error loading forecast';
             segmentDiv.appendChild(errorDiv);
         }
 
